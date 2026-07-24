@@ -18,9 +18,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: "npm"
+          node-version: 22
 
+      # Type Check Landing Site
       - name: Install dependencies (landing-site)
         run: npm ci
         working-directory: ./landing-site
@@ -29,6 +29,7 @@ jobs:
         run: npx tsc --noEmit
         working-directory: ./landing-site
 
+      # Type Check Checkout Site
       - name: Install dependencies (checkout-site)
         run: npm ci
         working-directory: ./checkout-site
