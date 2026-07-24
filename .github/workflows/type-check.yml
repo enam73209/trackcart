@@ -2,10 +2,13 @@ name: Type Check
 
 on:
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
+      - release
 
 jobs:
   type-check:
+    name: type-check
     runs-on: ubuntu-latest
 
     steps:
@@ -14,12 +17,10 @@ jobs:
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
-        uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: "npm"
 
-      # Check landing-site
       - name: Install dependencies (landing-site)
         run: npm ci
         working-directory: ./landing-site
@@ -28,7 +29,6 @@ jobs:
         run: npx tsc --noEmit
         working-directory: ./landing-site
 
-      # Check checkout-site
       - name: Install dependencies (checkout-site)
         run: npm ci
         working-directory: ./checkout-site
