@@ -3,7 +3,13 @@
 import { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { ArrowLeft, CreditCard, Lock, ShieldCheck, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  CreditCard,
+  Lock,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 
 interface CartItem {
   id: string;
@@ -16,12 +22,12 @@ interface CartItem {
 const defaultProduct: CartItem = {
   id: "aerosound-max",
   name: "AeroSound Max",
-  price: 149.00,
+  price: 149.0,
   image: "/images/earpods-max.png",
-  quantity: 1
+  quantity: 1,
 };
 
-const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || "http://localhost:3000";
+const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL;
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
@@ -65,21 +71,27 @@ function CheckoutContent() {
     // Fallback to single product parameters
     const id = searchParams.get("id") || defaultProduct.id;
     const name = searchParams.get("name") || defaultProduct.name;
-    const priceStr = searchParams.get("price") || defaultProduct.price.toString();
+    const priceStr =
+      searchParams.get("price") || defaultProduct.price.toString();
     const image = searchParams.get("image") || defaultProduct.image;
 
-    setItems([{
-      id,
-      name,
-      price: parseFloat(priceStr),
-      image,
-      quantity: 1
-    }]);
+    setItems([
+      {
+        id,
+        name,
+        price: parseFloat(priceStr),
+        image,
+        quantity: 1,
+      },
+    ]);
   }, [searchParams]);
 
   // Pricing calculations
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = 0.00;
+  const subtotal = items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0,
+  );
+  const shipping = 0.0;
   const tax = subtotal * 0.085; // 8.5% sales tax
   const total = subtotal + shipping + tax;
 
@@ -153,7 +165,11 @@ function CheckoutContent() {
             Back to Cart
           </a>
           <span className="text-xl font-bold tracking-tight text-white">
-            Track<span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">Cart</span> Checkout
+            Track
+            <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+              Cart
+            </span>{" "}
+            Checkout
           </span>
           <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold bg-emerald-500/5 border border-emerald-500/10 px-3 py-1.5 rounded-full shadow-inner">
             <Lock className="h-3.5 w-3.5" />
@@ -164,18 +180,31 @@ function CheckoutContent() {
 
       {/* Main Form Area */}
       <main className="flex-grow mx-auto max-w-7xl w-full px-6 py-12 lg:px-8">
-        <form ref={formRef} onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <form
+          ref={formRef}
+          onSubmit={handleSubmit}
+          className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start"
+        >
           {/* Left Side: Form Details */}
           <div className="lg:col-span-7 space-y-8">
             {/* Step 1: Customer Info */}
             <div className="glass rounded-3xl p-6 sm:p-8 space-y-6">
               <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-500/20 text-xs font-extrabold text-cyan-400">1</span>
-                <h2 className="text-lg font-bold text-white">Customer Information</h2>
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-500/20 text-xs font-extrabold text-cyan-400">
+                  1
+                </span>
+                <h2 className="text-lg font-bold text-white">
+                  Customer Information
+                </h2>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="email" className="text-xs font-semibold text-gray-400">Email Address</label>
+                  <label
+                    htmlFor="email"
+                    className="text-xs font-semibold text-gray-400"
+                  >
+                    Email Address
+                  </label>
                   <input
                     type="email"
                     id="email"
@@ -186,10 +215,17 @@ function CheckoutContent() {
                     className="form-input"
                     autoComplete="email"
                   />
-                  <span className="error-message">❌ Please enter a valid email address.</span>
+                  <span className="error-message">
+                    ❌ Please enter a valid email address.
+                  </span>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="phone" className="text-xs font-semibold text-gray-400">Phone Number</label>
+                  <label
+                    htmlFor="phone"
+                    className="text-xs font-semibold text-gray-400"
+                  >
+                    Phone Number
+                  </label>
                   <input
                     type="tel"
                     id="phone"
@@ -201,7 +237,9 @@ function CheckoutContent() {
                     className="form-input"
                     autoComplete="tel"
                   />
-                  <span className="error-message">❌ Please enter a valid phone number.</span>
+                  <span className="error-message">
+                    ❌ Please enter a valid phone number.
+                  </span>
                 </div>
               </div>
             </div>
@@ -209,12 +247,21 @@ function CheckoutContent() {
             {/* Step 2: Shipping Address */}
             <div className="glass rounded-3xl p-6 sm:p-8 space-y-6">
               <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-500/20 text-xs font-extrabold text-cyan-400">2</span>
-                <h2 className="text-lg font-bold text-white">Shipping Details</h2>
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-500/20 text-xs font-extrabold text-cyan-400">
+                  2
+                </span>
+                <h2 className="text-lg font-bold text-white">
+                  Shipping Details
+                </h2>
               </div>
               <div className="space-y-4">
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="fullName" className="text-xs font-semibold text-gray-400">Full Name</label>
+                  <label
+                    htmlFor="fullName"
+                    className="text-xs font-semibold text-gray-400"
+                  >
+                    Full Name
+                  </label>
                   <input
                     type="text"
                     id="fullName"
@@ -225,10 +272,17 @@ function CheckoutContent() {
                     className="form-input"
                     autoComplete="name"
                   />
-                  <span className="error-message">❌ Full Name is required.</span>
+                  <span className="error-message">
+                    ❌ Full Name is required.
+                  </span>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="address" className="text-xs font-semibold text-gray-400">Street Address</label>
+                  <label
+                    htmlFor="address"
+                    className="text-xs font-semibold text-gray-400"
+                  >
+                    Street Address
+                  </label>
                   <input
                     type="text"
                     id="address"
@@ -239,11 +293,18 @@ function CheckoutContent() {
                     className="form-input"
                     autoComplete="shipping street-address"
                   />
-                  <span className="error-message">❌ Street Address is required.</span>
+                  <span className="error-message">
+                    ❌ Street Address is required.
+                  </span>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label htmlFor="city" className="text-xs font-semibold text-gray-400">City</label>
+                    <label
+                      htmlFor="city"
+                      className="text-xs font-semibold text-gray-400"
+                    >
+                      City
+                    </label>
                     <input
                       type="text"
                       id="city"
@@ -257,7 +318,12 @@ function CheckoutContent() {
                     <span className="error-message">❌ City is required.</span>
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label htmlFor="zip" className="text-xs font-semibold text-gray-400">ZIP / Postal Code</label>
+                    <label
+                      htmlFor="zip"
+                      className="text-xs font-semibold text-gray-400"
+                    >
+                      ZIP / Postal Code
+                    </label>
                     <input
                       type="text"
                       id="zip"
@@ -269,7 +335,9 @@ function CheckoutContent() {
                       className="form-input"
                       autoComplete="shipping postal-code"
                     />
-                    <span className="error-message">❌ Please enter a valid ZIP code.</span>
+                    <span className="error-message">
+                      ❌ Please enter a valid ZIP code.
+                    </span>
                   </div>
                 </div>
               </div>
@@ -279,8 +347,12 @@ function CheckoutContent() {
             <div className="glass rounded-3xl p-6 sm:p-8 space-y-6">
               <div className="flex items-center justify-between border-b border-white/5 pb-4">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-500/20 text-xs font-extrabold text-cyan-400">3</span>
-                  <h2 className="text-lg font-bold text-white">Payment Method</h2>
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-500/20 text-xs font-extrabold text-cyan-400">
+                    3
+                  </span>
+                  <h2 className="text-lg font-bold text-white">
+                    Payment Method
+                  </h2>
                 </div>
               </div>
 
@@ -317,9 +389,13 @@ function CheckoutContent() {
                 <div className="rounded-2xl bg-purple-500/5 border border-purple-500/20 p-5 text-sm text-purple-300 flex gap-3.5 items-start">
                   <span className="text-xl">ℹ</span>
                   <div>
-                    <h4 className="font-bold text-white mb-1">Pay with Cash on Delivery</h4>
+                    <h4 className="font-bold text-white mb-1">
+                      Pay with Cash on Delivery
+                    </h4>
                     <p className="text-xs text-gray-400 leading-relaxed">
-                      You will pay the courier in cash upon receiving your items. Please ensure you have the exact amount available on the day of delivery.
+                      You will pay the courier in cash upon receiving your
+                      items. Please ensure you have the exact amount available
+                      on the day of delivery.
                     </p>
                   </div>
                 </div>
@@ -330,12 +406,16 @@ function CheckoutContent() {
                 <div className="space-y-8 animate-fade-in">
                   {/* Virtual Credit Card Display */}
                   <div className="card-container w-full max-w-[340px] h-[200px] mx-auto">
-                    <div className={`card-inner relative w-full h-full rounded-2xl shadow-xl transition-transform duration-700 ${isCardFlipped ? "card-flipped" : ""}`}>
+                    <div
+                      className={`card-inner relative w-full h-full rounded-2xl shadow-xl transition-transform duration-700 ${isCardFlipped ? "card-flipped" : ""}`}
+                    >
                       {/* Card Front */}
                       <div className="card-front absolute inset-0 w-full h-full rounded-2xl p-6 flex flex-col justify-between bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 border border-white/10 text-white">
                         <div className="flex justify-between items-start">
                           <div className="space-y-1">
-                            <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Secure Visa</span>
+                            <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400">
+                              Secure Visa
+                            </span>
                             <div className="h-6 w-9 rounded-md bg-amber-400/20 border border-amber-400/30 flex items-center justify-center">
                               <div className="h-4 w-6 rounded bg-amber-500/40" />
                             </div>
@@ -351,13 +431,17 @@ function CheckoutContent() {
                         </div>
                         <div className="flex justify-between items-end text-xs">
                           <div>
-                            <span className="block text-[8px] uppercase tracking-wider text-slate-400">Cardholder</span>
+                            <span className="block text-[8px] uppercase tracking-wider text-slate-400">
+                              Cardholder
+                            </span>
                             <span className="font-bold font-mono tracking-wide max-w-[150px] truncate block">
                               {cardName.toUpperCase() || "YOUR NAME HERE"}
                             </span>
                           </div>
                           <div className="text-right">
-                            <span className="block text-[8px] uppercase tracking-wider text-slate-400">Expires</span>
+                            <span className="block text-[8px] uppercase tracking-wider text-slate-400">
+                              Expires
+                            </span>
                             <span className="font-bold font-mono">
                               {cardExpiry || "MM/YY"}
                             </span>
@@ -377,7 +461,9 @@ function CheckoutContent() {
                           </div>
                         </div>
                         <div className="px-6 text-[8px] text-slate-400 leading-normal">
-                          This is a demo secure virtual visualization card. Standard security protocols are simulated for demo validation purposes.
+                          This is a demo secure virtual visualization card.
+                          Standard security protocols are simulated for demo
+                          validation purposes.
                         </div>
                       </div>
                     </div>
@@ -386,7 +472,12 @@ function CheckoutContent() {
                   {/* Card input forms */}
                   <div className="space-y-4">
                     <div className="flex flex-col gap-1.5">
-                      <label htmlFor="cardName" className="text-xs font-semibold text-gray-400">Cardholder Name</label>
+                      <label
+                        htmlFor="cardName"
+                        className="text-xs font-semibold text-gray-400"
+                      >
+                        Cardholder Name
+                      </label>
                       <input
                         type="text"
                         id="cardName"
@@ -397,11 +488,18 @@ function CheckoutContent() {
                         className="form-input"
                         onFocus={() => setIsCardFlipped(false)}
                       />
-                      <span className="error-message">❌ Cardholder name is required.</span>
+                      <span className="error-message">
+                        ❌ Cardholder name is required.
+                      </span>
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <label htmlFor="cardNumber" className="text-xs font-semibold text-gray-400">Card Number</label>
+                      <label
+                        htmlFor="cardNumber"
+                        className="text-xs font-semibold text-gray-400"
+                      >
+                        Card Number
+                      </label>
                       <input
                         type="text"
                         id="cardNumber"
@@ -413,12 +511,19 @@ function CheckoutContent() {
                         className="form-input"
                         onFocus={() => setIsCardFlipped(false)}
                       />
-                      <span className="error-message">❌ Please enter a valid 16-digit card number.</span>
+                      <span className="error-message">
+                        ❌ Please enter a valid 16-digit card number.
+                      </span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="flex flex-col gap-1.5">
-                        <label htmlFor="cardExpiry" className="text-xs font-semibold text-gray-400">Expiration Date</label>
+                        <label
+                          htmlFor="cardExpiry"
+                          className="text-xs font-semibold text-gray-400"
+                        >
+                          Expiration Date
+                        </label>
                         <input
                           type="text"
                           id="cardExpiry"
@@ -430,10 +535,17 @@ function CheckoutContent() {
                           className="form-input"
                           onFocus={() => setIsCardFlipped(false)}
                         />
-                        <span className="error-message">❌ Expiry MM/YY required.</span>
+                        <span className="error-message">
+                          ❌ Expiry MM/YY required.
+                        </span>
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <label htmlFor="cardCvv" className="text-xs font-semibold text-gray-400">CVV / CVC</label>
+                        <label
+                          htmlFor="cardCvv"
+                          className="text-xs font-semibold text-gray-400"
+                        >
+                          CVV / CVC
+                        </label>
                         <input
                           type="text"
                           id="cardCvv"
@@ -446,7 +558,9 @@ function CheckoutContent() {
                           onFocus={() => setIsCardFlipped(true)}
                           onBlur={() => setIsCardFlipped(false)}
                         />
-                        <span className="error-message">❌ Valid 3-digit CVV required.</span>
+                        <span className="error-message">
+                          ❌ Valid 3-digit CVV required.
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -465,7 +579,10 @@ function CheckoutContent() {
               {/* Items List */}
               <div className="divide-y divide-white/5 max-h-[300px] overflow-y-auto pr-2 space-y-3">
                 {items.map((item) => (
-                  <div key={item.id} className="flex items-center gap-4 py-3 first:pt-0">
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-4 py-3 first:pt-0"
+                  >
                     <div className="relative h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-white/5 border border-white/10 flex overflow-hidden">
                       <Image
                         src={item.image}
@@ -476,8 +593,12 @@ function CheckoutContent() {
                       />
                     </div>
                     <div className="flex-grow">
-                      <h3 className="text-xs font-bold text-white">{item.name}</h3>
-                      <span className="text-[10px] text-gray-500">Qty: {item.quantity}</span>
+                      <h3 className="text-xs font-bold text-white">
+                        {item.name}
+                      </h3>
+                      <span className="text-[10px] text-gray-500">
+                        Qty: {item.quantity}
+                      </span>
                     </div>
                     <div className="text-right">
                       <span className="text-xs font-semibold text-white">
@@ -492,7 +613,9 @@ function CheckoutContent() {
               <div className="space-y-3 pt-4 border-t border-white/5 text-sm">
                 <div className="flex justify-between text-gray-400">
                   <span>Subtotal</span>
-                  <span className="text-white font-medium">${subtotal.toFixed(2)}</span>
+                  <span className="text-white font-medium">
+                    ${subtotal.toFixed(2)}
+                  </span>
                 </div>
                 <div className="flex justify-between text-gray-400">
                   <span>Shipping</span>
@@ -500,7 +623,9 @@ function CheckoutContent() {
                 </div>
                 <div className="flex justify-between text-gray-400">
                   <span>Estimated Tax (8.5%)</span>
-                  <span className="text-white font-medium">${tax.toFixed(2)}</span>
+                  <span className="text-white font-medium">
+                    ${tax.toFixed(2)}
+                  </span>
                 </div>
                 <div className="flex justify-between border-t border-white/5 pt-4 text-base font-extrabold text-white">
                   <span>Total Amount</span>
@@ -534,7 +659,8 @@ function CheckoutContent() {
                   <span>SSL Encrypted Checkout Security Guarantee</span>
                 </div>
                 <p className="leading-relaxed">
-                  By clicking Confirm Order, you authorize this demo simulation transaction of your purchase. No actual money will be charged.
+                  By clicking Confirm Order, you authorize this demo simulation
+                  transaction of your purchase. No actual money will be charged.
                 </p>
               </div>
             </div>
@@ -544,7 +670,10 @@ function CheckoutContent() {
 
       {/* Footer */}
       <footer className="border-t border-white/5 bg-[#030014] py-8 text-center text-xs text-gray-500 mt-auto">
-        <p>© {new Date().getFullYear()} TrackCart Checkout Portal. Powered by Secure SSL.</p>
+        <p>
+          © {new Date().getFullYear()} TrackCart Checkout Portal. Powered by
+          Secure SSL.
+        </p>
       </footer>
     </div>
   );
@@ -552,12 +681,16 @@ function CheckoutContent() {
 
 export default function CheckoutPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#030014] text-white flex flex-col items-center justify-center gap-4">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-cyan-400 border-t-transparent" />
-        <span className="text-sm font-semibold tracking-wider text-gray-400 animate-pulse">Initializing Checkout...</span>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#030014] text-white flex flex-col items-center justify-center gap-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-cyan-400 border-t-transparent" />
+          <span className="text-sm font-semibold tracking-wider text-gray-400 animate-pulse">
+            Initializing Checkout...
+          </span>
+        </div>
+      }
+    >
       <CheckoutContent />
     </Suspense>
   );

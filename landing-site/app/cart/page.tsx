@@ -2,17 +2,26 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Trash2, Plus, Minus, Lock, ShoppingBag, ArrowRight } from "lucide-react";
+import {
+  ArrowLeft,
+  Trash2,
+  Plus,
+  Minus,
+  Lock,
+  ShoppingBag,
+  ArrowRight,
+} from "lucide-react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { useCart } from "../context/CartContext";
 
-const CHECKOUT_URL = process.env.NEXT_PUBLIC_CHECKOUT_URL || "http://localhost:3001";
+const CHECKOUT_URL = process.env.NEXT_PUBLIC_CHECKOUT_URL;
 
 export default function CartPage() {
-  const { cart, updateQuantity, removeFromCart, cartTotal, cartCount } = useCart();
+  const { cart, updateQuantity, removeFromCart, cartTotal, cartCount } =
+    useCart();
 
-  const shipping = 0.00;
+  const shipping = 0.0;
   const tax = cartTotal * 0.085; // 8.5% sales tax
   const total = cartTotal + shipping + tax;
 
@@ -56,9 +65,12 @@ export default function CartPage() {
               <ShoppingBag className="h-8 w-8" />
             </div>
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-white">Your cart is empty</h2>
+              <h2 className="text-xl font-bold text-white">
+                Your cart is empty
+              </h2>
               <p className="text-sm text-gray-400 max-w-xs mx-auto leading-relaxed">
-                Add some premium wireless gadget devices to your cart to redefine your sound experience.
+                Add some premium wireless gadget devices to your cart to
+                redefine your sound experience.
               </p>
             </div>
             <Link
@@ -92,8 +104,12 @@ export default function CartPage() {
 
                   {/* Product Details */}
                   <div className="flex-grow text-center sm:text-left">
-                    <h3 className="text-base font-bold text-white">{item.name}</h3>
-                    <span className="text-xs text-gray-500">Unit Price: ${item.price.toFixed(2)}</span>
+                    <h3 className="text-base font-bold text-white">
+                      {item.name}
+                    </h3>
+                    <span className="text-xs text-gray-500">
+                      Unit Price: ${item.price.toFixed(2)}
+                    </span>
                   </div>
 
                   {/* Quantity Actions */}
@@ -144,7 +160,9 @@ export default function CartPage() {
                 <div className="space-y-3.5 text-sm">
                   <div className="flex justify-between text-gray-400">
                     <span>Subtotal</span>
-                    <span className="text-white font-medium">${cartTotal.toFixed(2)}</span>
+                    <span className="text-white font-medium">
+                      ${cartTotal.toFixed(2)}
+                    </span>
                   </div>
                   <div className="flex justify-between text-gray-400">
                     <span>Shipping</span>
@@ -152,7 +170,9 @@ export default function CartPage() {
                   </div>
                   <div className="flex justify-between text-gray-400">
                     <span>Estimated Tax (8.5%)</span>
-                    <span className="text-white font-medium">${tax.toFixed(2)}</span>
+                    <span className="text-white font-medium">
+                      ${tax.toFixed(2)}
+                    </span>
                   </div>
                   <div className="flex justify-between border-t border-white/5 pt-4 text-base font-extrabold text-white">
                     <span>Grand Total</span>
