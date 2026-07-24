@@ -3,20 +3,22 @@
 import { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { ArrowLeft, CreditCard, Lock, ShieldCheck, Sparkles, HelpCircle } from "lucide-react";
+import { ArrowLeft, CreditCard, Lock, ShieldCheck, Sparkles } from "lucide-react";
 
-interface Product {
+interface CartItem {
   id: string;
   name: string;
   price: number;
   image: string;
+  quantity: number;
 }
 
-const defaultProduct: Product = {
+const defaultProduct: CartItem = {
   id: "aerosound-max",
   name: "AeroSound Max",
   price: 149.00,
   image: "/images/earpods-max.png",
+  quantity: 1
 };
 
 const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || "http://localhost:3000";
@@ -25,8 +27,8 @@ function CheckoutContent() {
   const searchParams = useSearchParams();
   const formRef = useRef<HTMLFormElement>(null);
 
-  // Parse product details from query params
-  const [product, setProduct] = useState<Product>(defaultProduct);
+  // Parse product details or cart from query params
+  const [items, setItems] = useState<CartItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<"card" | "cod">("card");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStep, setSubmitStep] = useState("");
@@ -47,25 +49,39 @@ function CheckoutContent() {
   const [zip, setZip] = useState("");
 
   useEffect(() => {
-    const id = searchParams.get("id");
-    const name = searchParams.get("name");
-    const priceStr = searchParams.get("price");
-    const image = searchParams.get("image");
-
-    if (id && name && priceStr && image) {
-      setProduct({
-        id,
-        name,
-        price: parseFloat(priceStr),
-        image,
-      });
+    const cartParam = searchParams.get("cart");
+    if (cartParam) {
+      try {
+        const parsed = JSON.parse(cartParam);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setItems(parsed);
+          return;
+        }
+      } catch (e) {
+        console.error("Failed to parse cart parameter", e);
+      }
     }
+
+    // Fallback to single product parameters
+    const id = searchParams.get("id") || defaultProduct.id;
+    const name = searchParams.get("name") || defaultProduct.name;
+    const priceStr = searchParams.get("price") || defaultProduct.price.toString();
+    const image = searchParams.get("image") || defaultProduct.image;
+
+    setItems([{
+      id,
+      name,
+      price: parseFloat(priceStr),
+      image,
+      quantity: 1
+    }]);
   }, [searchParams]);
 
-  // Order Pricing Calculations
+  // Pricing calculations
+  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shipping = 0.00;
-  const tax = product.price * 0.085; // 8.5% sales tax
-  const total = product.price + shipping + tax;
+  const tax = subtotal * 0.085; // 8.5% sales tax
+  const total = subtotal + shipping + tax;
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, "");
@@ -109,7 +125,7 @@ function CheckoutContent() {
           const orderId = "TC-" + Math.floor(100000 + Math.random() * 900000);
           const thankYouParams = new URLSearchParams({
             orderId,
-            name: product.name,
+            cart: JSON.stringify(items),
             total: total.toFixed(2),
             email,
             paymentMethod,
@@ -130,11 +146,11 @@ function CheckoutContent() {
       <header className="border-b border-white/5 bg-[#030014]/50 backdrop-blur-md">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
           <a
-            href={LANDING_URL}
+            href={`${LANDING_URL}/cart`}
             className="flex items-center gap-2 text-sm font-semibold text-gray-400 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Shop
+            Back to Cart
           </a>
           <span className="text-xl font-bold tracking-tight text-white">
             Track<span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">Cart</span> Checkout
@@ -446,31 +462,37 @@ function CheckoutContent() {
                 Order Summary
               </h2>
 
-              {/* Product Info */}
-              <div className="flex items-center gap-4 py-2">
-                <div className="relative h-20 w-20 flex-shrink-0 items-center justify-center rounded-2xl bg-white/5 border border-white/10 flex overflow-hidden">
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    width={70}
-                    height={70}
-                    className="object-contain"
-                  />
-                </div>
-                <div className="flex-grow">
-                  <h3 className="text-sm font-bold text-white">{product.name}</h3>
-                  <span className="text-xs text-gray-500">Qty: 1</span>
-                </div>
-                <div className="text-right">
-                  <span className="font-semibold text-white">${product.price.toFixed(2)}</span>
-                </div>
+              {/* Items List */}
+              <div className="divide-y divide-white/5 max-h-[300px] overflow-y-auto pr-2 space-y-3">
+                {items.map((item) => (
+                  <div key={item.id} className="flex items-center gap-4 py-3 first:pt-0">
+                    <div className="relative h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-white/5 border border-white/10 flex overflow-hidden">
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        width={50}
+                        height={50}
+                        className="object-contain"
+                      />
+                    </div>
+                    <div className="flex-grow">
+                      <h3 className="text-xs font-bold text-white">{item.name}</h3>
+                      <span className="text-[10px] text-gray-500">Qty: {item.quantity}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-semibold text-white">
+                        ${(item.price * item.quantity).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               {/* Pricing breakdown */}
               <div className="space-y-3 pt-4 border-t border-white/5 text-sm">
                 <div className="flex justify-between text-gray-400">
                   <span>Subtotal</span>
-                  <span className="text-white font-medium">${product.price.toFixed(2)}</span>
+                  <span className="text-white font-medium">${subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-gray-400">
                   <span>Shipping</span>
