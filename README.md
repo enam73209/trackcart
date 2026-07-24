@@ -32,4 +32,5 @@ https://trackcart-checkout.vercel.app/
 - Meta Pixel
 - Conversion API
 - Server-side GTM
+- Cross Domain tracking
 - Consent Mode v2
