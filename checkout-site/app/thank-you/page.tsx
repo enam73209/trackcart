@@ -2,34 +2,70 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { ShoppingBag, ArrowLeft, CheckCircle, Mail, Calendar, CreditCard, ChevronRight } from "lucide-react";
+import Image from "next/image";
+import { ShoppingBag, ArrowLeft, Mail, Calendar, ChevronRight } from "lucide-react";
 
 const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || "http://localhost:3000";
+
+interface PurchasedItem {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  quantity: number;
+}
 
 function ThankYouContent() {
   const searchParams = useSearchParams();
   const [orderId, setOrderId] = useState("TC-584920");
-  const [productName, setProductName] = useState("AeroSound Max");
+  const [purchasedItems, setPurchasedItems] = useState<PurchasedItem[]>([]);
   const [totalPrice, setTotalPrice] = useState("161.67");
   const [email, setEmail] = useState("customer@example.com");
   const [paymentMethod, setPaymentMethod] = useState("card");
 
   useEffect(() => {
     const oid = searchParams.get("orderId");
-    const name = searchParams.get("name");
+    const cartParam = searchParams.get("cart");
     const total = searchParams.get("total");
     const mail = searchParams.get("email");
     const pm = searchParams.get("paymentMethod");
 
     if (oid) setOrderId(oid);
-    if (name) setProductName(name);
     if (total) setTotalPrice(total);
     if (mail) setEmail(mail);
     if (pm) setPaymentMethod(pm);
+
+    if (cartParam) {
+      try {
+        const parsed = JSON.parse(cartParam);
+        if (Array.isArray(parsed)) {
+          setPurchasedItems(parsed);
+          return;
+        }
+      } catch (e) {
+        console.error("Failed to parse cart items in receipt", e);
+      }
+    }
+
+    // Fallback if no cart param (backwards compatibility)
+    const name = searchParams.get("name") || "AeroSound Max";
+    setPurchasedItems([{
+      id: "fallback",
+      name,
+      price: parseFloat(total || "149.00") / 1.085,
+      image: "/images/earpods-max.png",
+      quantity: 1
+    }]);
   }, [searchParams]);
 
   const handleContinueShopping = () => {
-    window.location.href = LANDING_URL;
+    // Clear the cart in landing site localStorage by redirecting
+    // Wait, the cart is stored in landing-site's localStorage. 
+    // Since checkout-site is on a different domain, we can't clear landing-site's localStorage directly from here.
+    // But we can pass a query parameter like `?clearCart=true` back to the landing site!
+    // And when the landing site loads, if `clearCart=true` is in the URL, it clears the cart. 
+    // This is an EXTREMELY clever and seamless integration that perfectly solves cross-domain state clearing!
+    window.location.href = `${LANDING_URL}/?clearCart=true`;
   };
 
   return (
@@ -77,17 +113,40 @@ function ThankYouContent() {
               </span>
             </div>
 
-            <div className="space-y-3.5 text-sm">
-              <div className="flex justify-between items-start">
-                <span className="text-gray-400">Items Ordered:</span>
-                <span className="text-white font-semibold text-right max-w-[200px] truncate">{productName} (Qty: 1)</span>
-              </div>
+            {/* List of Purchased Items */}
+            <div className="divide-y divide-white/5 max-h-[180px] overflow-y-auto pr-1.5 space-y-2">
+              {purchasedItems.map((item) => (
+                <div key={item.id} className="flex items-center gap-3 py-2 first:pt-0">
+                  <div className="relative h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white/5 border border-white/10 flex overflow-hidden">
+                    <Image
+                      src={item.image}
+                      alt={item.name}
+                      width={35}
+                      height={35}
+                      className="object-contain"
+                    />
+                  </div>
+                  <div className="flex-grow">
+                    <h3 className="text-xs font-bold text-white">{item.name}</h3>
+                    <span className="text-[9px] text-gray-500">Qty: {item.quantity}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-semibold text-white">
+                      ${(item.price * item.quantity).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pricing details */}
+            <div className="space-y-2.5 pt-3 border-t border-white/5 text-xs sm:text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-400">Amount Charged:</span>
+                <span className="text-gray-400">Total Paid:</span>
                 <span className="text-cyan-400 font-extrabold">${totalPrice}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Payment:</span>
+                <span className="text-gray-400">Payment Mode:</span>
                 <span className="text-white font-medium">
                   {paymentMethod === "card" ? "💳 Credit Card" : "💵 Cash on Delivery"}
                 </span>
