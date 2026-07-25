@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "./context/CartContext";
+import Script from "next/script";
+import { GA_MEASUREMENT_ID } from "@/lib/ga";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,7 +17,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "TrackCart - Premium Audio Gadgets",
-  description: "Next-gen audio experience, wireless earpods, professional headphones, and sport earbuds.",
+  description:
+    "Next-gen audio experience, wireless earpods, professional headphones, and sport earbuds.",
 };
 
 export default function RootLayout({
@@ -23,6 +26,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const isDevelopment = process.env.NODE_ENV === "development";
+
   return (
     <html
       lang="en"
@@ -30,6 +35,23 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-[#030014]">
         <CartProvider>{children}</CartProvider>
+        {/* GA4 */}
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+          strategy="afterInteractive"
+        />
+
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', '${GA_MEASUREMENT_ID}', {
+      debug_mode: ${isDevelopment},
+    });
+  `}
+        </Script>
       </body>
     </html>
   );
