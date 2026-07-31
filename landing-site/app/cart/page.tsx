@@ -15,7 +15,8 @@ import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { useCart } from "../context/CartContext";
 
-const CHECKOUT_URL = process.env.NEXT_PUBLIC_CHECKOUT_URL;
+const CHECKOUT_URL =
+  process.env.NEXT_PUBLIC_CHECKOUT_URL || "http://localhost:3001";
 
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, cartTotal, cartCount } =

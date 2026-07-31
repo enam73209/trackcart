@@ -36,7 +36,9 @@ export default function Home() {
               </span>
             </h1>
             <p className="mx-auto max-w-xl text-base sm:text-xl text-gray-400 leading-relaxed mb-10">
-              Discover premium audio gadgets engineered for absolute clarity, immersive spatial sound, and total noise isolation. Feel every beat.
+              Discover premium audio gadgets engineered for absolute clarity,
+              immersive spatial sound, and total noise isolation. Feel every
+              beat.
             </p>
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
               <a
@@ -52,6 +54,12 @@ export default function Home() {
               >
                 Learn More
               </a>
+              <a
+                href="https://trackcart-checkout.vercel.app"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full bg-white/5 border border-white/10 px-8 py-4 text-sm font-semibold text-white hover:bg-white/10 hover:border-white/20 transition-all"
+              >
+                Checkout Page
+              </a>
             </div>
           </div>
         </section>
@@ -64,8 +72,12 @@ export default function Home() {
                 <Truck className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="font-semibold text-white">Free Express Delivery</h3>
-                <p className="text-xs text-gray-400">Ships within 24 hours worldwide</p>
+                <h3 className="font-semibold text-white">
+                  Free Express Delivery
+                </h3>
+                <p className="text-xs text-gray-400">
+                  Ships within 24 hours worldwide
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-4 rounded-2xl bg-white/[0.02] border border-white/5 p-6 backdrop-blur-sm">
@@ -74,7 +86,9 @@ export default function Home() {
               </div>
               <div>
                 <h3 className="font-semibold text-white">2 Year Warranty</h3>
-                <p className="text-xs text-gray-400">Full hardware replacement protection</p>
+                <p className="text-xs text-gray-400">
+                  Full hardware replacement protection
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-4 rounded-2xl bg-white/[0.02] border border-white/5 p-6 backdrop-blur-sm">
@@ -83,7 +97,9 @@ export default function Home() {
               </div>
               <div>
                 <h3 className="font-semibold text-white">30-Day Guarantee</h3>
-                <p className="text-xs text-gray-400">Hassle-free returns & refunds</p>
+                <p className="text-xs text-gray-400">
+                  Hassle-free returns & refunds
+                </p>
               </div>
             </div>
           </div>
@@ -96,7 +112,8 @@ export default function Home() {
               Featured Sound Gadgets
             </h2>
             <p className="mx-auto max-w-lg text-sm sm:text-base text-gray-400">
-              Pick your sound weapon of choice. Premium engineering, zero compromise.
+              Pick your sound weapon of choice. Premium engineering, zero
+              compromise.
             </p>
           </div>
 
