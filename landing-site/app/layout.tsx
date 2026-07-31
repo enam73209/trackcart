@@ -47,9 +47,9 @@ export default function RootLayout({
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
 
-    gtag('config', '${GA_MEASUREMENT_ID}', {
-      debug_mode: ${isDevelopment},
-    });
+   gtag('config', '${GA_MEASUREMENT_ID}', {
+  ...(isDevelopment ? { debug_mode: true } : {}),
+  });
   `}
         </Script>
       </body>
