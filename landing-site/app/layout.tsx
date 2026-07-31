@@ -26,8 +26,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const isDevelopment = process.env.NODE_ENV === "development";
-
   return (
     <html
       lang="en"
@@ -47,7 +45,9 @@ export default function RootLayout({
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
 
-    gtag('config', '${GA_MEASUREMENT_ID}'${isDevelopment ? ", { debug_mode: true }" : ""});
+    gtag('config', '${GA_MEASUREMENT_ID}', {
+      debug_mode: true,
+    });
   `}
         </Script>
       </body>
