@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Star, ShoppingCart, ArrowLeft, ArrowRight, ShieldCheck, Truck, RefreshCw, Check } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
 import { products } from "../../data/products";
@@ -49,13 +49,13 @@ export default function ProductDetailsPage() {
     setTimeout(() => setAddedMessage(false), 2000);
   };
 
-  const handleBuyNow = () => {
-    // Construct the checkout payload with the current cart plus this product
-    const updatedCart = [...cart];
-    const existingItem = updatedCart.find((item) => item.id === product.id);
-    if (existingItem) {
-      existingItem.quantity += 1;
-    } else {
+  const buyNowUrl = useMemo(() => {
+    if (!product) return "";
+    const updatedCart = cart.map((item) =>
+      item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+    );
+    const existingItem = cart.find((item) => item.id === product.id);
+    if (!existingItem) {
       updatedCart.push({
         id: product.id,
         name: product.name,
@@ -65,12 +65,16 @@ export default function ProductDetailsPage() {
       });
     }
 
-    addToCart(product); // actually add it to context cart
-
     const urlParams = new URLSearchParams({
       cart: JSON.stringify(updatedCart),
     });
-    window.location.href = `${CHECKOUT_URL}/?${urlParams.toString()}`;
+    return `${CHECKOUT_URL}/?${urlParams.toString()}`;
+  }, [cart, product]);
+
+  const handleBuyNow = () => {
+    if (product) {
+      addToCart(product);
+    }
   };
 
   return (
@@ -171,13 +175,14 @@ export default function ProductDetailsPage() {
                   </>
                 )}
               </button>
-              <button
+              <Link
+                href={buyNowUrl}
                 onClick={handleBuyNow}
                 className="w-full sm:w-auto flex-grow inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-purple-600 py-4 px-6 text-sm font-bold text-white shadow-lg glow-btn cursor-pointer transition-all"
               >
                 <span>Buy Now</span>
                 <ArrowRight className="h-4 w-4" />
-              </button>
+              </Link>
             </div>
 
             {/* Highlights */}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -26,13 +27,12 @@ export default function CartPage() {
   const tax = cartTotal * 0.085; // 8.5% sales tax
   const total = cartTotal + shipping + tax;
 
-  const handleCheckout = () => {
-    if (cart.length === 0) return;
+  const checkoutUrl = useMemo(() => {
     const params = new URLSearchParams({
       cart: JSON.stringify(cart),
     });
-    window.location.href = `${CHECKOUT_URL}/?${params.toString()}`;
-  };
+    return `${CHECKOUT_URL}/?${params.toString()}`;
+  }, [cart]);
 
   return (
     <div className="relative min-h-screen bg-[#030014] text-gray-100 flex flex-col font-sans">
@@ -181,13 +181,13 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                <button
-                  onClick={handleCheckout}
+                <Link
+                  href={checkoutUrl}
                   className="w-full flex justify-center items-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-purple-600 py-4 text-sm font-bold text-white shadow-lg glow-btn cursor-pointer transition-all"
                 >
                   <Lock className="h-4 w-4" />
                   <span>Proceed to Checkout</span>
-                </button>
+                </Link>
 
                 <div className="pt-2 flex items-center justify-center gap-1.5 text-xs text-gray-500 text-center font-medium">
                   <span>🛡</span>
