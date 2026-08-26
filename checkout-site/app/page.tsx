@@ -10,6 +10,8 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import { pushGtmEvent } from "../lib/gtm";
+
 
 interface CartItem {
   id: string;
@@ -94,6 +96,24 @@ function CheckoutContent() {
   const shipping = 0.0;
   const tax = subtotal * 0.085; // 8.5% sales tax
   const total = subtotal + shipping + tax;
+
+  const hasSentBeginCheckout = useRef(false);
+
+  useEffect(() => {
+    if (items.length > 0 && !hasSentBeginCheckout.current) {
+      hasSentBeginCheckout.current = true;
+      pushGtmEvent("begin_checkout", {
+        currency: "USD",
+        value: total,
+        items: items.map((item) => ({
+          item_id: item.id,
+          item_name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+      });
+    }
+  }, [items, total]);
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, "");

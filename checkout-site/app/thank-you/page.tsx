@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { ShoppingBag, ArrowLeft, Mail, Calendar, ChevronRight } from "lucide-react";
+import { pushGtmEvent } from "../../lib/gtm";
+
 
 const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || "http://localhost:3000";
 
@@ -57,6 +59,32 @@ function ThankYouContent() {
       quantity: 1
     }]);
   }, [searchParams]);
+
+  const hasSentPurchase = useRef(false);
+
+  useEffect(() => {
+    if (purchasedItems.length > 0 && !hasSentPurchase.current) {
+      hasSentPurchase.current = true;
+      const subtotal = purchasedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const calculatedTax = subtotal * 0.085;
+      const calculatedShipping = 0.0;
+
+      pushGtmEvent("purchase", {
+        transaction_id: orderId,
+        value: parseFloat(totalPrice),
+        tax: calculatedTax,
+        shipping: calculatedShipping,
+        currency: "USD",
+        payment_type: paymentMethod,
+        items: purchasedItems.map((item) => ({
+          item_id: item.id,
+          item_name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+      });
+    }
+  }, [purchasedItems, orderId, totalPrice, paymentMethod]);
 
   const handleContinueShopping = () => {
     // Clear the cart in landing site localStorage by redirecting

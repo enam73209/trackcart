@@ -4,11 +4,12 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Star, ShoppingCart, ArrowLeft, ArrowRight, ShieldCheck, Truck, RefreshCw, Check } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
 import { products } from "../../data/products";
 import { useCart } from "../../context/CartContext";
+import { pushGtmEvent } from "../../../lib/gtm";
 
 const CHECKOUT_URL = process.env.NEXT_PUBLIC_CHECKOUT_URL || "http://localhost:3001";
 
@@ -20,6 +21,23 @@ export default function ProductDetailsPage() {
 
   const id = params.id as string;
   const product = products.find((p) => p.id === id);
+
+  useEffect(() => {
+    if (product) {
+      pushGtmEvent("view_item", {
+        currency: "USD",
+        value: product.price,
+        items: [
+          {
+            item_id: product.id,
+            item_name: product.name,
+            price: product.price,
+            quantity: 1,
+          },
+        ],
+      });
+    }
+  }, [product]);
 
   if (!product) {
     return (
@@ -47,6 +65,18 @@ export default function ProductDetailsPage() {
     addToCart(product);
     setAddedMessage(true);
     setTimeout(() => setAddedMessage(false), 2000);
+    pushGtmEvent("add_to_cart", {
+      currency: "USD",
+      value: product.price,
+      items: [
+        {
+          item_id: product.id,
+          item_name: product.name,
+          price: product.price,
+          quantity: 1,
+        },
+      ],
+    });
   };
 
   const buyNowUrl = useMemo(() => {
@@ -74,6 +104,18 @@ export default function ProductDetailsPage() {
   const handleBuyNow = () => {
     if (product) {
       addToCart(product);
+      pushGtmEvent("add_to_cart", {
+        currency: "USD",
+        value: product.price,
+        items: [
+          {
+            item_id: product.id,
+            item_name: product.name,
+            price: product.price,
+            quantity: 1,
+          },
+        ],
+      });
     }
   };
 
