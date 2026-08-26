@@ -2,6 +2,23 @@ import Script from "next/script";
 
 const GTM_ID = "GTM-57SH6ZTG";
 
+declare global {
+  interface Window {
+    dataLayer: any[];
+  }
+}
+
+export const pushGtmEvent = (event: string, ecommerceData: any) => {
+  if (typeof window !== "undefined") {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ ecommerce: null }); // Clear previous ecommerce data
+    window.dataLayer.push({
+      event,
+      ecommerce: ecommerceData,
+    });
+  }
+};
+
 export default function GoogleTagManager() {
   return (
     <>
@@ -17,3 +34,4 @@ export default function GoogleTagManager() {
     </>
   );
 }
+

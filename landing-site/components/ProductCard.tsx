@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Star, ShoppingCart } from "lucide-react";
 import { Product } from "../app/data/products";
 import { useCart } from "../app/context/CartContext";
+import { pushGtmEvent } from "../lib/gtm";
 
 interface ProductCardProps {
   product: Product;
@@ -15,12 +16,36 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
 
   const handleCardClick = () => {
+    pushGtmEvent("select_item", {
+      item_list_id: "featured_products",
+      item_list_name: "Featured Sound Gadgets",
+      items: [
+        {
+          item_id: product.id,
+          item_name: product.name,
+          price: product.price,
+          quantity: 1,
+        },
+      ],
+    });
     router.push(`/product-details/${product.id}`);
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card navigation
     addToCart(product);
+    pushGtmEvent("add_to_cart", {
+      currency: "USD",
+      value: product.price,
+      items: [
+        {
+          item_id: product.id,
+          item_name: product.name,
+          price: product.price,
+          quantity: 1,
+        },
+      ],
+    });
   };
 
   return (
