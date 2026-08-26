@@ -63,8 +63,18 @@ function ThankYouContent() {
   const hasSentPurchase = useRef(false);
 
   useEffect(() => {
-    if (purchasedItems.length > 0 && !hasSentPurchase.current) {
+    if (purchasedItems.length > 0 && !hasSentPurchase.current && orderId) {
+      // Check if this orderId has already been processed to prevent duplicates on refresh
+      const processedOrders = JSON.parse(localStorage.getItem("trackcart_processed_orders") || "[]");
+      if (processedOrders.includes(orderId)) {
+        console.log(`Order ${orderId} already processed. Skipping purchase event.`);
+        return;
+      }
+
       hasSentPurchase.current = true;
+      processedOrders.push(orderId);
+      localStorage.setItem("trackcart_processed_orders", JSON.stringify(processedOrders));
+
       const subtotal = purchasedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
       const calculatedTax = subtotal * 0.085;
       const calculatedShipping = 0.0;
@@ -85,6 +95,7 @@ function ThankYouContent() {
       });
     }
   }, [purchasedItems, orderId, totalPrice, paymentMethod]);
+
 
   const handleContinueShopping = () => {
     // Clear the cart in landing site localStorage by redirecting
