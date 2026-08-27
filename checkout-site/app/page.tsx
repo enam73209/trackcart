@@ -44,6 +44,45 @@ function CheckoutContent() {
   const [appliedProductCoupons, setAppliedProductCoupons] = useState<string[]>([]);
   const [isOrderCouponApplied, setIsOrderCouponApplied] = useState(false);
 
+  const hasSentShippingInfo = useRef(false);
+  const hasSentPaymentInfo = useRef(false);
+
+  const handleShippingComplete = () => {
+    if (hasSentShippingInfo.current) return;
+    hasSentShippingInfo.current = true;
+    pushGtmEvent("add_shipping_info", {
+      shipping_tier: "Standard",
+      value: total,
+      currency: "USD",
+      ...(isOrderCouponApplied ? { coupon: "SUMMER20" } : {}),
+      items: items.map((item) => ({
+        item_id: item.id,
+        item_name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        ...(item.coupon && appliedProductCoupons.includes(item.id) ? { coupon: item.coupon } : {}),
+      })),
+    });
+  };
+
+  const handlePaymentComplete = (method: "card" | "cod") => {
+    if (hasSentPaymentInfo.current) return;
+    hasSentPaymentInfo.current = true;
+    pushGtmEvent("add_payment_info", {
+      payment_type: method === "card" ? "Credit Card" : "Cash on Delivery",
+      value: total,
+      currency: "USD",
+      ...(isOrderCouponApplied ? { coupon: "SUMMER20" } : {}),
+      items: items.map((item) => ({
+        item_id: item.id,
+        item_name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        ...(item.coupon && appliedProductCoupons.includes(item.id) ? { coupon: item.coupon } : {}),
+      })),
+    });
+  };
+
   // Card input states
   const [cardNumber, setCardNumber] = useState("");
   const [cardName, setCardName] = useState("");
@@ -176,6 +215,9 @@ function CheckoutContent() {
       formRef.current?.reportValidity();
       return;
     }
+
+    handleShippingComplete();
+    handlePaymentComplete(paymentMethod);
 
     setIsSubmitting(true);
     setSubmitStep("Securing checkout session...");
@@ -402,6 +444,9 @@ function CheckoutContent() {
                       placeholder="94043"
                       className="form-input"
                       autoComplete="shipping postal-code"
+                      onBlur={() => {
+                        if (zip.trim()) handleShippingComplete();
+                      }}
                     />
                     <span className="error-message">
                       ❌ Please enter a valid ZIP code.
@@ -428,7 +473,10 @@ function CheckoutContent() {
               <div className="grid grid-cols-2 gap-4">
                 <button
                   type="button"
-                  onClick={() => setPaymentMethod("card")}
+                  onClick={() => {
+                    setPaymentMethod("card");
+                    handleShippingComplete();
+                  }}
                   className={`flex items-center justify-center gap-3 p-4 rounded-2xl border text-sm font-semibold transition-all ${
                     paymentMethod === "card"
                       ? "bg-cyan-500/10 border-cyan-500 text-white"
@@ -440,7 +488,11 @@ function CheckoutContent() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setPaymentMethod("cod")}
+                  onClick={() => {
+                    setPaymentMethod("cod");
+                    handleShippingComplete();
+                    handlePaymentComplete("cod");
+                  }}
                   className={`flex items-center justify-center gap-3 p-4 rounded-2xl border text-sm font-semibold transition-all ${
                     paymentMethod === "cod"
                       ? "bg-purple-500/10 border-purple-500 text-white"
@@ -554,7 +606,11 @@ function CheckoutContent() {
                         onChange={(e) => setCardName(e.target.value)}
                         placeholder="John Doe"
                         className="form-input"
-                        onFocus={() => setIsCardFlipped(false)}
+                        onFocus={() => {
+                          setIsCardFlipped(false);
+                          handleShippingComplete();
+                          handlePaymentComplete("card");
+                        }}
                       />
                       <span className="error-message">
                         ❌ Cardholder name is required.
@@ -577,7 +633,11 @@ function CheckoutContent() {
                         onChange={handleCardNumberChange}
                         placeholder="0000 0000 0000 0000"
                         className="form-input"
-                        onFocus={() => setIsCardFlipped(false)}
+                        onFocus={() => {
+                          setIsCardFlipped(false);
+                          handleShippingComplete();
+                          handlePaymentComplete("card");
+                        }}
                       />
                       <span className="error-message">
                         ❌ Please enter a valid 16-digit card number.
@@ -601,7 +661,11 @@ function CheckoutContent() {
                           onChange={handleExpiryChange}
                           placeholder="MM/YY"
                           className="form-input"
-                          onFocus={() => setIsCardFlipped(false)}
+                          onFocus={() => {
+                            setIsCardFlipped(false);
+                            handleShippingComplete();
+                            handlePaymentComplete("card");
+                          }}
                         />
                         <span className="error-message">
                           ❌ Expiry MM/YY required.
@@ -623,7 +687,11 @@ function CheckoutContent() {
                           onChange={handleCvvChange}
                           placeholder="123"
                           className="form-input"
-                          onFocus={() => setIsCardFlipped(true)}
+                          onFocus={() => {
+                            setIsCardFlipped(true);
+                            handleShippingComplete();
+                            handlePaymentComplete("card");
+                          }}
                           onBlur={() => setIsCardFlipped(false)}
                         />
                         <span className="error-message">
