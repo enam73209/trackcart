@@ -33,6 +33,7 @@ export default function ProductDetailsPage() {
             item_name: product.name,
             price: product.price,
             quantity: 1,
+            ...(product.coupon ? { coupon: product.coupon } : {}),
           },
         ],
       });
@@ -74,6 +75,7 @@ export default function ProductDetailsPage() {
           item_name: product.name,
           price: product.price,
           quantity: 1,
+          ...(product.coupon ? { coupon: product.coupon } : {}),
         },
       ],
     });
@@ -92,6 +94,7 @@ export default function ProductDetailsPage() {
         price: product.price,
         image: product.image,
         quantity: 1,
+        coupon: product.coupon,
       });
     }
 
@@ -113,6 +116,7 @@ export default function ProductDetailsPage() {
             item_name: product.name,
             price: product.price,
             quantity: 1,
+            ...(product.coupon ? { coupon: product.coupon } : {}),
           },
         ],
       });

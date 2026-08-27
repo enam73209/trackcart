@@ -19,6 +19,7 @@ interface CartItem {
   price: number;
   image: string;
   quantity: number;
+  coupon?: string;
 }
 
 const defaultProduct: CartItem = {
@@ -40,6 +41,47 @@ function CheckoutContent() {
   const [paymentMethod, setPaymentMethod] = useState<"card" | "cod">("card");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStep, setSubmitStep] = useState("");
+  const [appliedProductCoupons, setAppliedProductCoupons] = useState<string[]>([]);
+  const [isOrderCouponApplied, setIsOrderCouponApplied] = useState(false);
+
+  const hasSentShippingInfo = useRef(false);
+  const hasSentPaymentInfo = useRef(false);
+
+  const handleShippingComplete = () => {
+    if (hasSentShippingInfo.current) return;
+    hasSentShippingInfo.current = true;
+    pushGtmEvent("add_shipping_info", {
+      shipping_tier: "Standard",
+      value: total,
+      currency: "USD",
+      ...(isOrderCouponApplied ? { coupon: "SUMMER20" } : {}),
+      items: items.map((item) => ({
+        item_id: item.id,
+        item_name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        ...(item.coupon && appliedProductCoupons.includes(item.id) ? { coupon: item.coupon } : {}),
+      })),
+    });
+  };
+
+  const handlePaymentComplete = (method: "card" | "cod") => {
+    if (hasSentPaymentInfo.current) return;
+    hasSentPaymentInfo.current = true;
+    pushGtmEvent("add_payment_info", {
+      payment_type: method === "card" ? "Credit Card" : "Cash on Delivery",
+      value: total,
+      currency: "USD",
+      ...(isOrderCouponApplied ? { coupon: "SUMMER20" } : {}),
+      items: items.map((item) => ({
+        item_id: item.id,
+        item_name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        ...(item.coupon && appliedProductCoupons.includes(item.id) ? { coupon: item.coupon } : {}),
+      })),
+    });
+  };
 
   // Card input states
   const [cardNumber, setCardNumber] = useState("");
@@ -57,45 +99,73 @@ function CheckoutContent() {
   const [zip, setZip] = useState("");
 
   useEffect(() => {
+    let parsedItems: CartItem[] = [];
     const cartParam = searchParams.get("cart");
     if (cartParam) {
       try {
         const parsed = JSON.parse(cartParam);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setItems(parsed);
-          return;
+          parsedItems = parsed;
         }
       } catch (e) {
         console.error("Failed to parse cart parameter", e);
       }
     }
 
-    // Fallback to single product parameters
-    const id = searchParams.get("id") || defaultProduct.id;
-    const name = searchParams.get("name") || defaultProduct.name;
-    const priceStr =
-      searchParams.get("price") || defaultProduct.price.toString();
-    const image = searchParams.get("image") || defaultProduct.image;
+    if (parsedItems.length === 0) {
+      // Fallback to single product parameters
+      const id = searchParams.get("id") || defaultProduct.id;
+      const name = searchParams.get("name") || defaultProduct.name;
+      const priceStr =
+        searchParams.get("price") || defaultProduct.price.toString();
+      const image = searchParams.get("image") || defaultProduct.image;
+      const fallbackCoupon = id === "aerosound-max" ? "SAVE10" : undefined;
 
-    setItems([
-      {
-        id,
-        name,
-        price: parseFloat(priceStr),
-        image,
-        quantity: 1,
-      },
-    ]);
+      parsedItems = [
+        {
+          id,
+          name,
+          price: parseFloat(priceStr),
+          image,
+          quantity: 1,
+          coupon: fallbackCoupon,
+        },
+      ];
+    }
+
+    setItems(parsedItems);
+
+    // Auto-apply product coupons for all items that have one
+    const couponItemIds = parsedItems
+      .filter((item) => item.coupon)
+      .map((item) => item.id);
+    setAppliedProductCoupons(couponItemIds);
   }, [searchParams]);
 
   // Pricing calculations
+  const getItemPrice = (item: CartItem) => {
+    if (item.coupon === "SAVE10" && appliedProductCoupons.includes(item.id)) {
+      return item.price * 0.9; // 10% off
+    }
+    return item.price;
+  };
+
   const subtotal = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0,
   );
+
+  const itemSubtotalAfterProductCoupons = items.reduce(
+    (sum, item) => sum + getItemPrice(item) * item.quantity,
+    0,
+  );
+
+  const discountAmount = isOrderCouponApplied ? itemSubtotalAfterProductCoupons * 0.20 : 0;
+  const subtotalAfterAllDiscounts = itemSubtotalAfterProductCoupons - discountAmount;
+
   const shipping = 0.0;
-  const tax = subtotal * 0.085; // 8.5% sales tax
-  const total = subtotal + shipping + tax;
+  const tax = subtotalAfterAllDiscounts * 0.085; // 8.5% sales tax
+  const total = subtotalAfterAllDiscounts + shipping + tax;
 
   const hasSentBeginCheckout = useRef(false);
 
@@ -110,6 +180,7 @@ function CheckoutContent() {
           item_name: item.name,
           price: item.price,
           quantity: item.quantity,
+          ...(item.coupon ? { coupon: item.coupon } : {}),
         })),
       });
     }
@@ -145,6 +216,9 @@ function CheckoutContent() {
       return;
     }
 
+    handleShippingComplete();
+    handlePaymentComplete(paymentMethod);
+
     setIsSubmitting(true);
     setSubmitStep("Securing checkout session...");
 
@@ -155,13 +229,29 @@ function CheckoutContent() {
         setTimeout(() => {
           // Generate mock order details to pass to thank you page
           const orderId = "TC-" + Math.floor(100000 + Math.random() * 900000);
+          
+          const itemsWithAppliedCoupons = items.map((item) => {
+            if (item.coupon && appliedProductCoupons.includes(item.id)) {
+              return {
+                ...item,
+                coupon: item.coupon,
+              };
+            } else {
+              const { coupon, ...rest } = item;
+              return rest;
+            }
+          });
+
           const thankYouParams = new URLSearchParams({
             orderId,
-            cart: JSON.stringify(items),
+            cart: JSON.stringify(itemsWithAppliedCoupons),
             total: total.toFixed(2),
             email,
             paymentMethod,
           });
+          if (isOrderCouponApplied) {
+            thankYouParams.set("coupon", "SUMMER20");
+          }
           window.location.href = `/thank-you?${thankYouParams.toString()}`;
         }, 1000);
       }, 1000);
@@ -354,6 +444,9 @@ function CheckoutContent() {
                       placeholder="94043"
                       className="form-input"
                       autoComplete="shipping postal-code"
+                      onBlur={() => {
+                        if (zip.trim()) handleShippingComplete();
+                      }}
                     />
                     <span className="error-message">
                       ❌ Please enter a valid ZIP code.
@@ -380,7 +473,10 @@ function CheckoutContent() {
               <div className="grid grid-cols-2 gap-4">
                 <button
                   type="button"
-                  onClick={() => setPaymentMethod("card")}
+                  onClick={() => {
+                    setPaymentMethod("card");
+                    handleShippingComplete();
+                  }}
                   className={`flex items-center justify-center gap-3 p-4 rounded-2xl border text-sm font-semibold transition-all ${
                     paymentMethod === "card"
                       ? "bg-cyan-500/10 border-cyan-500 text-white"
@@ -392,7 +488,11 @@ function CheckoutContent() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setPaymentMethod("cod")}
+                  onClick={() => {
+                    setPaymentMethod("cod");
+                    handleShippingComplete();
+                    handlePaymentComplete("cod");
+                  }}
                   className={`flex items-center justify-center gap-3 p-4 rounded-2xl border text-sm font-semibold transition-all ${
                     paymentMethod === "cod"
                       ? "bg-purple-500/10 border-purple-500 text-white"
@@ -506,7 +606,11 @@ function CheckoutContent() {
                         onChange={(e) => setCardName(e.target.value)}
                         placeholder="John Doe"
                         className="form-input"
-                        onFocus={() => setIsCardFlipped(false)}
+                        onFocus={() => {
+                          setIsCardFlipped(false);
+                          handleShippingComplete();
+                          handlePaymentComplete("card");
+                        }}
                       />
                       <span className="error-message">
                         ❌ Cardholder name is required.
@@ -529,7 +633,11 @@ function CheckoutContent() {
                         onChange={handleCardNumberChange}
                         placeholder="0000 0000 0000 0000"
                         className="form-input"
-                        onFocus={() => setIsCardFlipped(false)}
+                        onFocus={() => {
+                          setIsCardFlipped(false);
+                          handleShippingComplete();
+                          handlePaymentComplete("card");
+                        }}
                       />
                       <span className="error-message">
                         ❌ Please enter a valid 16-digit card number.
@@ -553,7 +661,11 @@ function CheckoutContent() {
                           onChange={handleExpiryChange}
                           placeholder="MM/YY"
                           className="form-input"
-                          onFocus={() => setIsCardFlipped(false)}
+                          onFocus={() => {
+                            setIsCardFlipped(false);
+                            handleShippingComplete();
+                            handlePaymentComplete("card");
+                          }}
                         />
                         <span className="error-message">
                           ❌ Expiry MM/YY required.
@@ -575,7 +687,11 @@ function CheckoutContent() {
                           onChange={handleCvvChange}
                           placeholder="123"
                           className="form-input"
-                          onFocus={() => setIsCardFlipped(true)}
+                          onFocus={() => {
+                            setIsCardFlipped(true);
+                            handleShippingComplete();
+                            handlePaymentComplete("card");
+                          }}
                           onBlur={() => setIsCardFlipped(false)}
                         />
                         <span className="error-message">
@@ -621,12 +737,92 @@ function CheckoutContent() {
                       </span>
                     </div>
                     <div className="text-right">
+                      {item.coupon && appliedProductCoupons.includes(item.id) && (
+                        <span className="block text-[10px] text-gray-500 line-through">
+                          ${(item.price * item.quantity).toFixed(2)}
+                        </span>
+                      )}
                       <span className="text-xs font-semibold text-white">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        ${(getItemPrice(item) * item.quantity).toFixed(2)}
                       </span>
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* Coupons & Discounts Selection */}
+              <div className="space-y-4 pt-4 border-t border-white/5">
+                <h3 className="text-xs font-bold text-gray-300 uppercase tracking-wider">
+                  Available Coupons
+                </h3>
+                
+                <div className="space-y-3">
+                  {/* Product-level Coupon (SAVE10) */}
+                  {items.some((item) => item.coupon) && (
+                    <div className="space-y-2">
+                      {items
+                        .filter((item) => item.coupon)
+                        .map((item) => {
+                          const isApplied = appliedProductCoupons.includes(item.id);
+                          return (
+                            <button
+                              type="button"
+                              key={`prod-coupon-${item.id}`}
+                              onClick={() => {
+                                if (isApplied) {
+                                  setAppliedProductCoupons((prev) => prev.filter((id) => id !== item.id));
+                                } else {
+                                  setAppliedProductCoupons((prev) => [...prev, item.id]);
+                                }
+                              }}
+                              className={`w-full flex items-center justify-between p-3.5 rounded-2xl border text-xs font-semibold transition-all text-left cursor-pointer ${
+                                isApplied
+                                  ? "bg-cyan-500/10 border-cyan-500 text-white"
+                                  : "bg-white/[0.01] border-white/5 text-gray-400 hover:bg-white/5 hover:text-white"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm">🏷</span>
+                                <div>
+                                  <span className="font-mono bg-cyan-500/20 text-cyan-300 px-1.5 py-0.5 rounded mr-1.5 font-bold">
+                                    {item.coupon}
+                                  </span>
+                                  <span>10% off {item.name}</span>
+                                </div>
+                              </div>
+                              <span className="text-cyan-400 font-bold">
+                                {isApplied ? "Applied" : "Apply"}
+                              </span>
+                            </button>
+                          );
+                        })}
+                    </div>
+                  )}
+
+                  {/* Order-level Coupon (SUMMER20) */}
+                  <button
+                    type="button"
+                    onClick={() => setIsOrderCouponApplied(!isOrderCouponApplied)}
+                    className={`w-full flex items-center justify-between p-3.5 rounded-2xl border text-xs font-semibold transition-all text-left cursor-pointer ${
+                      isOrderCouponApplied
+                        ? "bg-purple-500/10 border-purple-500 text-white"
+                        : "bg-white/[0.01] border-white/5 text-gray-400 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">🎟</span>
+                      <div>
+                        <span className="font-mono bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded mr-1.5 font-bold">
+                          SUMMER20
+                        </span>
+                        <span>20% off entire order</span>
+                      </div>
+                    </div>
+                    <span className="text-purple-400 font-bold">
+                      {isOrderCouponApplied ? "Applied" : "Apply"}
+                    </span>
+                  </button>
+                </div>
               </div>
 
               {/* Pricing breakdown */}
@@ -637,16 +833,42 @@ function CheckoutContent() {
                     ${subtotal.toFixed(2)}
                   </span>
                 </div>
+                
+                {items.some((item) => item.coupon && appliedProductCoupons.includes(item.id)) && (
+                  <div className="flex justify-between text-cyan-400 text-xs">
+                    <span className="flex items-center gap-1">
+                      <span>🏷</span> Product Discount (SAVE10)
+                    </span>
+                    <span>
+                      -${items
+                        .filter((item) => item.coupon === "SAVE10" && appliedProductCoupons.includes(item.id))
+                        .reduce((sum, item) => sum + (item.price * 0.1) * item.quantity, 0)
+                        .toFixed(2)}
+                    </span>
+                  </div>
+                )}
+
+                {isOrderCouponApplied && (
+                  <div className="flex justify-between text-purple-400 text-xs">
+                    <span className="flex items-center gap-1">
+                      <span>🎟</span> Order Discount (SUMMER20)
+                    </span>
+                    <span>-${discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between text-gray-400">
                   <span>Shipping</span>
                   <span className="text-emerald-400 font-semibold">FREE</span>
                 </div>
+                
                 <div className="flex justify-between text-gray-400">
                   <span>Estimated Tax (8.5%)</span>
                   <span className="text-white font-medium">
                     ${tax.toFixed(2)}
                   </span>
                 </div>
+                
                 <div className="flex justify-between border-t border-white/5 pt-4 text-base font-extrabold text-white">
                   <span>Total Amount</span>
                   <span className="text-cyan-400">${total.toFixed(2)}</span>
