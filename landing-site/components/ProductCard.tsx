@@ -25,6 +25,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           item_name: product.name,
           price: product.price,
           quantity: 1,
+          ...(product.coupon ? { coupon: product.coupon } : {}),
         },
       ],
     });
@@ -43,6 +44,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           item_name: product.name,
           price: product.price,
           quantity: 1,
+          ...(product.coupon ? { coupon: product.coupon } : {}),
         },
       ],
     });

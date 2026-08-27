@@ -3,11 +3,17 @@
 import { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { ShoppingBag, ArrowLeft, Mail, Calendar, ChevronRight } from "lucide-react";
+import {
+  ShoppingBag,
+  ArrowLeft,
+  Mail,
+  Calendar,
+  ChevronRight,
+} from "lucide-react";
 import { pushGtmEvent } from "../../lib/gtm";
 
-
-const LANDING_URL = process.env.NEXT_PUBLIC_LANDING_URL || "http://localhost:3000";
+const LANDING_URL =
+  process.env.NEXT_PUBLIC_LANDING_URL || "http://localhost:3000";
 
 interface PurchasedItem {
   id: string;
@@ -15,6 +21,7 @@ interface PurchasedItem {
   price: number;
   image: string;
   quantity: number;
+  coupon?: string;
 }
 
 function ThankYouContent() {
@@ -24,6 +31,14 @@ function ThankYouContent() {
   const [totalPrice, setTotalPrice] = useState("161.67");
   const [email, setEmail] = useState("customer@example.com");
   const [paymentMethod, setPaymentMethod] = useState("card");
+  const [coupon, setCoupon] = useState<string | null>(null);
+
+  const getItemPrice = (item: PurchasedItem) => {
+    if (item.coupon === "SAVE10") {
+      return item.price * 0.9; // 10% off
+    }
+    return item.price;
+  };
 
   useEffect(() => {
     const oid = searchParams.get("orderId");
@@ -31,11 +46,13 @@ function ThankYouContent() {
     const total = searchParams.get("total");
     const mail = searchParams.get("email");
     const pm = searchParams.get("paymentMethod");
+    const cp = searchParams.get("coupon");
 
     if (oid) setOrderId(oid);
     if (total) setTotalPrice(total);
     if (mail) setEmail(mail);
     if (pm) setPaymentMethod(pm);
+    if (cp) setCoupon(cp);
 
     if (cartParam) {
       try {
@@ -51,13 +68,15 @@ function ThankYouContent() {
 
     // Fallback if no cart param (backwards compatibility)
     const name = searchParams.get("name") || "AeroSound Max";
-    setPurchasedItems([{
-      id: "fallback",
-      name,
-      price: parseFloat(total || "149.00") / 1.085,
-      image: "/images/earpods-max.png",
-      quantity: 1
-    }]);
+    setPurchasedItems([
+      {
+        id: "fallback",
+        name,
+        price: parseFloat(total || "149.00") / 1.085,
+        image: "/images/earpods-max.png",
+        quantity: 1,
+      },
+    ]);
   }, [searchParams]);
 
   const hasSentPurchase = useRef(false);
@@ -65,17 +84,27 @@ function ThankYouContent() {
   useEffect(() => {
     if (purchasedItems.length > 0 && !hasSentPurchase.current && orderId) {
       // Check if this orderId has already been processed to prevent duplicates on refresh
-      const processedOrders = JSON.parse(localStorage.getItem("trackcart_processed_orders") || "[]");
+      const processedOrders = JSON.parse(
+        localStorage.getItem("trackcart_processed_orders") || "[]",
+      );
       if (processedOrders.includes(orderId)) {
-        console.log(`Order ${orderId} already processed. Skipping purchase event.`);
+        console.log(
+          `Order ${orderId} already processed. Skipping purchase event.`,
+        );
         return;
       }
 
       hasSentPurchase.current = true;
       processedOrders.push(orderId);
-      localStorage.setItem("trackcart_processed_orders", JSON.stringify(processedOrders));
+      localStorage.setItem(
+        "trackcart_processed_orders",
+        JSON.stringify(processedOrders),
+      );
 
-      const subtotal = purchasedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const subtotal = purchasedItems.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0,
+      );
       const calculatedTax = subtotal * 0.085;
       const calculatedShipping = 0.0;
 
@@ -85,24 +114,24 @@ function ThankYouContent() {
         tax: calculatedTax,
         shipping: calculatedShipping,
         currency: "USD",
-        payment_type: paymentMethod,
+        ...(coupon ? { coupon } : {}),
         items: purchasedItems.map((item) => ({
           item_id: item.id,
           item_name: item.name,
           price: item.price,
           quantity: item.quantity,
+          ...(item.coupon ? { coupon: item.coupon } : {}),
         })),
       });
     }
-  }, [purchasedItems, orderId, totalPrice, paymentMethod]);
-
+  }, [purchasedItems, orderId, totalPrice, paymentMethod, coupon]);
 
   const handleContinueShopping = () => {
     // Clear the cart in landing site localStorage by redirecting
-    // Wait, the cart is stored in landing-site's localStorage. 
+    // Wait, the cart is stored in landing-site's localStorage.
     // Since checkout-site is on a different domain, we can't clear landing-site's localStorage directly from here.
     // But we can pass a query parameter like `?clearCart=true` back to the landing site!
-    // And when the landing site loads, if `clearCart=true` is in the URL, it clears the cart. 
+    // And when the landing site loads, if `clearCart=true` is in the URL, it clears the cart.
     // This is an EXTREMELY clever and seamless integration that perfectly solves cross-domain state clearing!
     window.location.href = `${LANDING_URL}/?clearCart=true`;
   };
@@ -139,14 +168,17 @@ function ThankYouContent() {
               Order Confirmed!
             </h1>
             <p className="text-gray-400 text-sm sm:text-base max-w-sm mx-auto">
-              Thank you for shopping with TrackCart. Your order is secured and is currently being processed.
+              Thank you for shopping with TrackCart. Your order is secured and
+              is currently being processed.
             </p>
           </div>
 
           {/* Order Details Card */}
           <div className="glass rounded-3xl p-6 text-left space-y-4">
             <div className="flex items-center justify-between border-b border-white/5 pb-3">
-              <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Order Number</span>
+              <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">
+                Order Number
+              </span>
               <span className="text-sm font-mono font-bold text-white bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-md">
                 {orderId}
               </span>
@@ -155,7 +187,10 @@ function ThankYouContent() {
             {/* List of Purchased Items */}
             <div className="divide-y divide-white/5 max-h-[180px] overflow-y-auto pr-1.5 space-y-2">
               {purchasedItems.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 py-2 first:pt-0">
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3 py-2 first:pt-0"
+                >
                   <div className="relative h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white/5 border border-white/10 flex overflow-hidden">
                     <Image
                       src={item.image}
@@ -166,12 +201,21 @@ function ThankYouContent() {
                     />
                   </div>
                   <div className="flex-grow">
-                    <h3 className="text-xs font-bold text-white">{item.name}</h3>
-                    <span className="text-[9px] text-gray-500">Qty: {item.quantity}</span>
+                    <h3 className="text-xs font-bold text-white">
+                      {item.name}
+                    </h3>
+                    <span className="text-[9px] text-gray-500">
+                      Qty: {item.quantity}
+                    </span>
                   </div>
                   <div className="text-right">
+                    {item.coupon === "SAVE10" && (
+                      <span className="block text-[9px] text-gray-500 line-through">
+                        ${(item.price * item.quantity).toFixed(2)}
+                      </span>
+                    )}
                     <span className="text-xs font-semibold text-white">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      ${(getItemPrice(item) * item.quantity).toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -182,12 +226,16 @@ function ThankYouContent() {
             <div className="space-y-2.5 pt-3 border-t border-white/5 text-xs sm:text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-400">Total Paid:</span>
-                <span className="text-cyan-400 font-extrabold">${totalPrice}</span>
+                <span className="text-cyan-400 font-extrabold">
+                  ${totalPrice}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Payment Mode:</span>
                 <span className="text-white font-medium">
-                  {paymentMethod === "card" ? "💳 Credit Card" : "💵 Cash on Delivery"}
+                  {paymentMethod === "card"
+                    ? "💳 Credit Card"
+                    : "💵 Cash on Delivery"}
                 </span>
               </div>
             </div>
@@ -197,13 +245,18 @@ function ThankYouContent() {
               <div className="flex items-center gap-3">
                 <Mail className="h-4 w-4 text-cyan-400 shrink-0" />
                 <p>
-                  Confirmation sent to <span className="text-white font-semibold">{email}</span>.
+                  Confirmation sent to{" "}
+                  <span className="text-white font-semibold">{email}</span>.
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <Calendar className="h-4 w-4 text-purple-400 shrink-0" />
                 <p>
-                  Estimated delivery: <span className="text-white font-semibold">2 - 3 business days</span>.
+                  Estimated delivery:{" "}
+                  <span className="text-white font-semibold">
+                    2 - 3 business days
+                  </span>
+                  .
                 </p>
               </div>
             </div>
@@ -232,7 +285,10 @@ function ThankYouContent() {
 
       {/* Footer */}
       <footer className="border-t border-white/5 bg-[#030014] py-8 text-center text-xs text-gray-500">
-        <p>© {new Date().getFullYear()} TrackCart Gadgets. Secure SSL Fulfillment.</p>
+        <p>
+          © {new Date().getFullYear()} TrackCart Gadgets. Secure SSL
+          Fulfillment.
+        </p>
       </footer>
     </div>
   );
@@ -240,12 +296,16 @@ function ThankYouContent() {
 
 export default function ThankYouPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#030014] text-white flex flex-col items-center justify-center gap-4">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-cyan-400 border-t-transparent" />
-        <span className="text-sm font-semibold tracking-wider text-gray-400 animate-pulse">Loading Receipt...</span>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#030014] text-white flex flex-col items-center justify-center gap-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-cyan-400 border-t-transparent" />
+          <span className="text-sm font-semibold tracking-wider text-gray-400 animate-pulse">
+            Loading Receipt...
+          </span>
+        </div>
+      }
+    >
       <ThankYouContent />
     </Suspense>
   );

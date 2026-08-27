@@ -10,6 +10,7 @@ export interface Product {
   specs: { [key: string]: string };
   badge?: string;
   color: string;
+  coupon?: string;
 }
 
 export const products: Product[] = [
@@ -17,6 +18,7 @@ export const products: Product[] = [
     id: "aerosound-max",
     name: "AeroSound Max",
     price: 149.00,
+    coupon: "SAVE10",
     description: "True wireless earpods with adaptive active noise cancellation, high-fidelity spatial audio, and up to 40 hours of battery life.",
     image: "/images/earpods-max.png",
     rating: 4.8,
