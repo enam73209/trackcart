@@ -3,6 +3,7 @@ import { ArrowRight, ShieldCheck, Truck, RefreshCw } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ProductCard from "../components/ProductCard";
+import PromotionBanner from "../components/PromotionBanner";
 import { products } from "./data/products";
 
 export default function Home() {
@@ -62,6 +63,11 @@ export default function Home() {
               </a>
             </div>
           </div>
+        </section>
+
+        {/* Promotion Section */}
+        <section className="mx-auto max-w-7xl px-6 lg:px-8 mb-12">
+          <PromotionBanner />
         </section>
 
         {/* Benefits Bar */}
