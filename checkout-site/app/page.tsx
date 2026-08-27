@@ -444,9 +444,6 @@ function CheckoutContent() {
                       placeholder="94043"
                       className="form-input"
                       autoComplete="shipping postal-code"
-                      onBlur={() => {
-                        if (zip.trim()) handleShippingComplete();
-                      }}
                     />
                     <span className="error-message">
                       ❌ Please enter a valid ZIP code.
@@ -473,10 +470,7 @@ function CheckoutContent() {
               <div className="grid grid-cols-2 gap-4">
                 <button
                   type="button"
-                  onClick={() => {
-                    setPaymentMethod("card");
-                    handleShippingComplete();
-                  }}
+                  onClick={() => setPaymentMethod("card")}
                   className={`flex items-center justify-center gap-3 p-4 rounded-2xl border text-sm font-semibold transition-all ${
                     paymentMethod === "card"
                       ? "bg-cyan-500/10 border-cyan-500 text-white"
@@ -488,11 +482,7 @@ function CheckoutContent() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setPaymentMethod("cod");
-                    handleShippingComplete();
-                    handlePaymentComplete("cod");
-                  }}
+                  onClick={() => setPaymentMethod("cod")}
                   className={`flex items-center justify-center gap-3 p-4 rounded-2xl border text-sm font-semibold transition-all ${
                     paymentMethod === "cod"
                       ? "bg-purple-500/10 border-purple-500 text-white"
@@ -606,11 +596,7 @@ function CheckoutContent() {
                         onChange={(e) => setCardName(e.target.value)}
                         placeholder="John Doe"
                         className="form-input"
-                        onFocus={() => {
-                          setIsCardFlipped(false);
-                          handleShippingComplete();
-                          handlePaymentComplete("card");
-                        }}
+                        onFocus={() => setIsCardFlipped(false)}
                       />
                       <span className="error-message">
                         ❌ Cardholder name is required.
@@ -633,11 +619,7 @@ function CheckoutContent() {
                         onChange={handleCardNumberChange}
                         placeholder="0000 0000 0000 0000"
                         className="form-input"
-                        onFocus={() => {
-                          setIsCardFlipped(false);
-                          handleShippingComplete();
-                          handlePaymentComplete("card");
-                        }}
+                        onFocus={() => setIsCardFlipped(false)}
                       />
                       <span className="error-message">
                         ❌ Please enter a valid 16-digit card number.
@@ -661,11 +643,7 @@ function CheckoutContent() {
                           onChange={handleExpiryChange}
                           placeholder="MM/YY"
                           className="form-input"
-                          onFocus={() => {
-                            setIsCardFlipped(false);
-                            handleShippingComplete();
-                            handlePaymentComplete("card");
-                          }}
+                          onFocus={() => setIsCardFlipped(false)}
                         />
                         <span className="error-message">
                           ❌ Expiry MM/YY required.
@@ -687,11 +665,7 @@ function CheckoutContent() {
                           onChange={handleCvvChange}
                           placeholder="123"
                           className="form-input"
-                          onFocus={() => {
-                            setIsCardFlipped(true);
-                            handleShippingComplete();
-                            handlePaymentComplete("card");
-                          }}
+                          onFocus={() => setIsCardFlipped(true)}
                           onBlur={() => setIsCardFlipped(false)}
                         />
                         <span className="error-message">
