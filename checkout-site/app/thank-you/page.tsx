@@ -49,11 +49,17 @@ function ThankYouContent() {
     setRefundedItems((prev) => [...prev, item.id]);
 
     const hasOrderCoupon = coupon === "SUMMER20";
-    const refundValue = getItemPrice(item) * item.quantity * (hasOrderCoupon ? 0.8 : 1);
+    const itemRefundSubtotal =
+      getItemPrice(item) * item.quantity * (hasOrderCoupon ? 0.8 : 1);
+    const calculatedTax = itemRefundSubtotal * 0.085;
+    const calculatedShipping = 0.0;
+    const totalRefundValue = itemRefundSubtotal + calculatedTax;
 
     pushGtmEvent("refund", {
       transaction_id: orderId,
-      value: parseFloat(refundValue.toFixed(2)),
+      value: parseFloat(totalRefundValue.toFixed(2)),
+      tax: parseFloat(calculatedTax.toFixed(2)),
+      shipping: calculatedShipping,
       currency: "USD",
       ...(coupon ? { coupon } : {}),
       items: [
@@ -67,7 +73,9 @@ function ThankYouContent() {
       ],
     });
 
-    setRefundAlert(`Refund requested successfully for ${item.name} ($${refundValue.toFixed(2)}).`);
+    setRefundAlert(
+      `Refund requested successfully for ${item.name} ($${totalRefundValue.toFixed(2)}).`,
+    );
     setTimeout(() => setRefundAlert(null), 4000);
   };
 
@@ -233,7 +241,9 @@ function ThankYouContent() {
                     className="flex items-center justify-between gap-3 py-2.5 first:pt-0"
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`relative h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white/5 border border-white/10 flex overflow-hidden ${isRefunded ? "opacity-40" : ""}`}>
+                      <div
+                        className={`relative h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white/5 border border-white/10 flex overflow-hidden ${isRefunded ? "opacity-40" : ""}`}
+                      >
                         <Image
                           src={item.image}
                           alt={item.name}
@@ -243,7 +253,9 @@ function ThankYouContent() {
                         />
                       </div>
                       <div>
-                        <h3 className={`text-xs font-bold ${isRefunded ? "text-gray-500 line-through" : "text-white"}`}>
+                        <h3
+                          className={`text-xs font-bold ${isRefunded ? "text-gray-500 line-through" : "text-white"}`}
+                        >
                           {item.name}
                         </h3>
                         <div className="flex items-center gap-2 mt-0.5">
@@ -258,7 +270,7 @@ function ThankYouContent() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-4">
                       <div className="text-right">
                         {item.coupon === "SAVE10" && (
@@ -266,7 +278,9 @@ function ThankYouContent() {
                             ${(item.price * item.quantity).toFixed(2)}
                           </span>
                         )}
-                        <span className={`text-xs font-semibold ${isRefunded ? "text-gray-500" : "text-white"}`}>
+                        <span
+                          className={`text-xs font-semibold ${isRefunded ? "text-gray-500" : "text-white"}`}
+                        >
                           ${(getItemPrice(item) * item.quantity).toFixed(2)}
                         </span>
                       </div>
