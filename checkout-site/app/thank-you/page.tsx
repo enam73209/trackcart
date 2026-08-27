@@ -40,6 +40,37 @@ function ThankYouContent() {
     return item.price;
   };
 
+  const [refundedItems, setRefundedItems] = useState<string[]>([]);
+  const [refundAlert, setRefundAlert] = useState<string | null>(null);
+
+  const handleRefund = (item: PurchasedItem) => {
+    if (refundedItems.includes(item.id)) return;
+
+    setRefundedItems((prev) => [...prev, item.id]);
+
+    const hasOrderCoupon = coupon === "SUMMER20";
+    const refundValue = getItemPrice(item) * item.quantity * (hasOrderCoupon ? 0.8 : 1);
+
+    pushGtmEvent("refund", {
+      transaction_id: orderId,
+      value: parseFloat(refundValue.toFixed(2)),
+      currency: "USD",
+      ...(coupon ? { coupon } : {}),
+      items: [
+        {
+          item_id: item.id,
+          item_name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          ...(item.coupon ? { coupon: item.coupon } : {}),
+        },
+      ],
+    });
+
+    setRefundAlert(`Refund requested successfully for ${item.name} ($${refundValue.toFixed(2)}).`);
+    setTimeout(() => setRefundAlert(null), 4000);
+  };
+
   useEffect(() => {
     const oid = searchParams.get("orderId");
     const cartParam = searchParams.get("cart");
@@ -173,6 +204,14 @@ function ThankYouContent() {
             </p>
           </div>
 
+          {/* Refund Success Alert Banner */}
+          {refundAlert && (
+            <div className="rounded-2xl bg-rose-500/10 border border-rose-500/20 p-4 text-xs sm:text-sm text-rose-300 flex items-center gap-3 animate-fade-in text-left">
+              <span className="text-base shrink-0">💸</span>
+              <p>{refundAlert}</p>
+            </div>
+          )}
+
           {/* Order Details Card */}
           <div className="glass rounded-3xl p-6 text-left space-y-4">
             <div className="flex items-center justify-between border-b border-white/5 pb-3">
@@ -185,41 +224,66 @@ function ThankYouContent() {
             </div>
 
             {/* List of Purchased Items */}
-            <div className="divide-y divide-white/5 max-h-[180px] overflow-y-auto pr-1.5 space-y-2">
-              {purchasedItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-3 py-2 first:pt-0"
-                >
-                  <div className="relative h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white/5 border border-white/10 flex overflow-hidden">
-                    <Image
-                      src={item.image}
-                      alt={item.name}
-                      width={35}
-                      height={35}
-                      className="object-contain"
-                    />
+            <div className="divide-y divide-white/5 max-h-[220px] overflow-y-auto pr-1.5 space-y-2">
+              {purchasedItems.map((item) => {
+                const isRefunded = refundedItems.includes(item.id);
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between gap-3 py-2.5 first:pt-0"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`relative h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white/5 border border-white/10 flex overflow-hidden ${isRefunded ? "opacity-40" : ""}`}>
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          width={35}
+                          height={35}
+                          className="object-contain"
+                        />
+                      </div>
+                      <div>
+                        <h3 className={`text-xs font-bold ${isRefunded ? "text-gray-500 line-through" : "text-white"}`}>
+                          {item.name}
+                        </h3>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[9px] text-gray-500">
+                            Qty: {item.quantity}
+                          </span>
+                          {isRefunded && (
+                            <span className="text-[8px] bg-rose-500/10 text-rose-400 border border-rose-500/20 px-1 rounded font-bold">
+                              Refunded
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        {item.coupon === "SAVE10" && (
+                          <span className="block text-[9px] text-gray-500 line-through">
+                            ${(item.price * item.quantity).toFixed(2)}
+                          </span>
+                        )}
+                        <span className={`text-xs font-semibold ${isRefunded ? "text-gray-500" : "text-white"}`}>
+                          ${(getItemPrice(item) * item.quantity).toFixed(2)}
+                        </span>
+                      </div>
+
+                      {!isRefunded && (
+                        <button
+                          type="button"
+                          onClick={() => handleRefund(item)}
+                          className="text-[10px] font-bold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-lg px-2.5 py-1 transition-all cursor-pointer"
+                        >
+                          Refund
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex-grow">
-                    <h3 className="text-xs font-bold text-white">
-                      {item.name}
-                    </h3>
-                    <span className="text-[9px] text-gray-500">
-                      Qty: {item.quantity}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    {item.coupon === "SAVE10" && (
-                      <span className="block text-[9px] text-gray-500 line-through">
-                        ${(item.price * item.quantity).toFixed(2)}
-                      </span>
-                    )}
-                    <span className="text-xs font-semibold text-white">
-                      ${(getItemPrice(item) * item.quantity).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Pricing details */}
